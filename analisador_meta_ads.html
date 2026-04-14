@@ -601,11 +601,15 @@ function salvarConfig() {
 
 function carregarConfig() {
   try {
+    console.log('📖 Tentando acessar localStorage...');
     const t = localStorage.getItem('meta_token');
     const a = localStorage.getItem('meta_account');
     const t2 = localStorage.getItem('meta_token2');
     const a2 = localStorage.getItem('meta_account2');
     const k = localStorage.getItem('anthropic_key');
+    
+    console.log(`📝 localStorage - Token: ${t ? 'SIM' : 'NÃO'}, Account: ${a ? 'SIM' : 'NÃO'}`);
+    
     if (t) document.getElementById('cfg_token').value = t;
     if (a) document.getElementById('cfg_account').value = a;
     if (t2) document.getElementById('cfg_token2').value = t2;
@@ -616,8 +620,10 @@ function carregarConfig() {
     TOKEN2 = t2 || '';
     ACCOUNT2 = a2 || '';
     ANTHROPIC_KEY = k || '';
+    console.log('✅ CONFIG carregada');
   } catch(err) {
-    console.error('Erro ao carregar config:', err.message);
+    console.error('❌ Erro ao carregar config:', err.message);
+    alert('⚠️ ERRO localStorage: ' + err.message);
   }
 }
 
@@ -1520,6 +1526,7 @@ function calcConversoes() {
 
 try {
   console.log('🚀 Iniciando aplicação...');
+  alert('🚀 Script carregado! Inicializando...');
   
   console.log('1️⃣ Carregando configurações...');
   carregarConfig();
@@ -1540,6 +1547,7 @@ try {
 } catch(err) {
   console.error('❌ Erro na inicialização:', err.message);
   console.error('Stack:', err.stack);
+  alert('❌ ERRO na inicialização:\n' + err.message + '\n\nStack: ' + err.stack);
   setStatus('err', 'Erro na inicialização: ' + err.message);
 }
 </script>
