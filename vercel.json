@@ -1,0 +1,11 @@
+{
+  "buildCommand": "echo 'Static deployment'",
+  "outputDirectory": ".",
+  "public": true,
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/analisador_meta_ads.html"
+    }
+  ]
+}
