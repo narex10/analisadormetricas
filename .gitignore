@@ -1,0 +1,34 @@
+# Node modules
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Dependencies
+package-lock.json
+yarn.lock
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build
+dist/
+build/
+
+# Temporary
+*.tmp
+.cache/
