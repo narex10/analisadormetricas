@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meta Ads Analyzer — Dashboard Premium</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --primary: #00D9FF;
+      --primary-dark: #00A8CC;
+      --secondary: #FFD700;
+      --success: #1D9E75;
+      --danger: #FF4444;
+      --warning: #FFA500;
+      --bg-dark: #0F1117;
+      --bg-darker: #010409;
+      --bg-card: #161B22;
+      --bg-hover: #21262D;
+      --text-light: #E6EDF3;
+      --text-muted: #8B949E;
+      --border-color: #30363D;
+      --radius: 12px;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.3);
+      --transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, var(--bg-darker) 0%, var(--bg-dark) 100%);
+      color: var(--text-light);
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+      gap: 2rem;
+    }
+
+    .header-title h1 {
+      font-size: 32px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .header-title p {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .select, .btn {
+      padding: 10px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      background: var(--bg-card);
+      color: var(--text-light);
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .select:hover, .btn:hover {
+      border-color: var(--primary);
+      background: var(--bg-hover);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-color: transparent;
+      color: var(--bg-dark);
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0, 217, 255, 0.2);
+    }
+
+    /* CONFIG PANEL */
+    .config-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .config-panel h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .config-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .field input, .field select {
+      padding: 10px 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-hover);
+      color: var(--text-light);
+      font-size: 13px;
+      transition: var(--transition);
+      font-family: 'Inter', sans-serif;
+    }
+
+    .field input:focus, .field select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+    }
+
+    .config-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .status-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.ok {
+      background: var(--success);
+    }
+
+    .status-dot.err {
+      background: var(--danger);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* TABS */
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+      border-bottom: 1px solid var(--border-color);
+      overflow-x: auto;
+      padding-bottom: 0;
+    }
+
+    .tab {
+      padding: 12px 20px;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: var(--transition);
+      position: relative;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .tab:hover {
+      color: var(--text-light);
+    }
+
+    .tab.active {
+      color: var(--primary);
+    }
+
+    .tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+    }
+
+    /* SECTIONS */
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* HERO KPI */
+    .hero-kpi {
+      background: linear-gradient(135deg, #1a3a3a 0%, #0f2a2a 100%);
+      border: 1px solid rgba(0, 217, 255, 0.2);
+      border-radius: var(--radius);
+      padding: 2rem;
+      margin-bottom: 2rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 2rem;
+      box-shadow: 0 10px 40px rgba(0, 217, 255, 0.1);
+    }
+
+    .hero-kpi-item {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .hero-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-value {
+      font-size: 48px;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .hero-status {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      width: fit-content;
+      margin-top: 0.5rem;
+    }
+
+    /* GRID */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .grid-2 {
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+
+    .grid-full {
+      grid-template-columns: 1fr;
+    }
+
+    /* CARDS */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition);
+    }
+
+    .card:hover {
+      border-color: var(--primary);
+      box-shadow: 0 12px 32px rgba(0, 217, 255, 0.15);
+      transform: translateY(-2px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card-value {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .card-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .card-sub {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .card-metric {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .card-metric:last-child {
+      border-bottom: none;
+    }
+
+    /* KPI GRID */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 1200px) {
+      .kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-kpi {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* CHART */
+    .chart-container {
+      position: relative;
+      height: 280px;
+      margin-bottom: 1rem;
+    }
+
+    /* TABLE */
+    .table-wrapper {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    table thead {
+      background: var(--bg-hover);
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    table th {
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: 11px;
+    }
+
+    table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    table tbody tr:hover {
+      background: var(--bg-hover);
+    }
+
+    /* STATUS */
+    .status-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .status-active {
+      background: rgba(29, 158, 117, 0.2);
+      color: var(--success);
+      border: 1px solid rgba(29, 158, 117, 0.3);
+    }
+
+    .status-paused {
+      background: rgba(255, 165, 0, 0.2);
+      color: var(--warning);
+      border: 1px solid rgba(255, 165, 0, 0.3);
+    }
+
+    .status-stopped {
+      background: rgba(255, 68, 68, 0.2);
+      color: var(--danger);
+      border: 1px solid rgba(255, 68, 68, 0.3);
+    }
+
+    /* FUNNEL */
+    .funnel-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .funnel-stage {
+      display: grid;
+      grid-template-columns: 120px 1fr 120px;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .funnel-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .funnel-bar-wrapper {
+      background: var(--bg-hover);
+      border-radius: 8px;
+      overflow: hidden;
+      height: 32px;
+      position: relative;
+    }
+
+    .funnel-bar {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: width 0.6s ease;
+      color: var(--bg-dark);
+    }
+
+    .funnel-pct {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    /* INSIGHTS */
+    .insights-container {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .insight-card {
+      background: var(--bg-hover);
+      border-left: 4px solid var(--primary);
+      border-radius: 8px;
+      padding: 1rem;
+      font-size: 13px;
+      line-height: 1.6;
+      transition: var(--transition);
+    }
+
+    .insight-card:hover {
+      border-left-color: var(--secondary);
+      background: rgba(0, 217, 255, 0.05);
+    }
+
+    .insight-card.success {
+      border-left-color: var(--success);
+    }
+
+    .insight-card.warning {
+      border-left-color: var(--warning);
+    }
+
+    .insight-card.danger {
+      border-left-color: var(--danger);
+    }
+
+    /* UTILITIES */
+    .text-success { color: var(--success); }
+    .text-warning { color: var(--warning); }
+    .text-danger { color: var(--danger); }
+    .text-primary { color: var(--primary); }
+    .text-muted { color: var(--text-muted); }
+
+    .mt-1 { margin-top: 0.5rem; }
+    .mt-2 { margin-top: 1rem; }
+    .mb-1 { margin-bottom: 0.5rem; }
+    .mb-2 { margin-bottom: 1rem; }
+
+    /* LOADING STATE */
+    .skeleton {
+      background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+      background-size: 200% 100%;
+      animation: loading 2s infinite;
+      border-radius: var(--radius);
+    }
+
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-title">
+        <h1>📊 Meta Ads Analyzer</h1>
+        <p id="lastUpdate">Sincronizando dados...</p>
+      </div>
+      <div class="header-controls">
+        <select class="select" id="periodo" onchange="carregarDados()">
+          <option value="last_7d">Últimos 7 dias</option>
+          <option value="last_14d">Últimos 14 dias</option>
+          <option value="last_30d" selected>Últimos 30 dias</option>
+          <option value="this_month">Este mês</option>
+          <option value="last_3m">Últimos 3 meses</option>
+        </select>
+        <button class="btn btn-primary" id="btnAtualizar" onclick="carregarDados()" disabled>
+          ↺ Atualizar dados
+        </button>
+        <button class="btn" onclick="toggleConfig()">⚙ Config</button>
+      </div>
+    </div>
+
+    <!-- CONFIG PANEL -->
+    <div class="config-panel" id="configPanel">
+      <h2>🔐 Configurar Meta Ads</h2>
+      <div class="config-grid">
+        <div class="field">
+          <label>Access Token (Conta 1)</label>
+          <input type="password" id="cfg_token" placeholder="EAA..." />
+        </div>
+        <div class="field">
+          <label>Ad Account ID (Conta 1)</label>
+          <input type="text" id="cfg_account" placeholder="123456789012345" />
+        </div>
+        <div class="field">
+          <label>Access Token (Conta 2)</label>
+          <input type="password" id="cfg_token2" placeholder="EAA..." />
+        </div>
+        <div class="field">
+          <label>Ad Account ID (Conta 2)</label>
+          <input type="text" id="cfg_account2" placeholder="987654321098765" />
+        </div>
+        <div class="field">
+          <label>Anthropic API Key (Opcional)</label>
+          <input type="password" id="cfg_anthropic" placeholder="xapi_..." />
+        </div>
+      </div>
+      <div class="config-actions">
+        <button class="btn btn-primary" onclick="conectar()">✓ Conectar</button>
+        <button class="btn" onclick="toggleConfig()">← Fechar</button>
+        <div class="status-indicator">
+          <div class="status-dot" id="statusDot"></div>
+          <span id="statusMsg" style="color: var(--text-muted); font-size: 13px;">Preencha as credenciais</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('visao', this)">📈 Visão Geral</button>
+      <button class="tab" onclick="showTab('campanhas', this)">🎯 Campanhas</button>
+      <button class="tab" onclick="showTab('conjuntos', this)">📋 Conjuntos</button>
+      <button class="tab" onclick="showTab('criativos', this)">🎨 Criativos</button>
+      <button class="tab" onclick="showTab('funil', this)">📊 Funil</button>
+      <button class="tab" onclick="showTab('pagina', this)">🌐 Página</button>
+      <button class="tab" onclick="showTab('calcular', this)">🧮 Calculadora</button>
+      <button class="tab" onclick="showTab('conversoes', this)">✓ Conversões</button>
+    </div>
+
+    <!-- SEÇÃO: VISÃO GERAL -->
+    <div class="section active" id="tab-visao">
+      <!-- HERO KPI -->
+      <div class="hero-kpi">
+        <div class="hero-kpi-item">
+          <div class="hero-label">ROAS ESTIMADO</div>
+          <div class="hero-value" id="hero-roas">–</div>
+          <div class="hero-sub" id="hero-roas-msg">Conecte para análise</div>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="hero-label">Investimento Total</div>
+          <div class="hero-value" style="font-size: 32px;" id="hero-invest">–</div>
+          <div class="hero-sub">Período selecionado</div>
+        </div>
+        <div class="hero-kpi-item">
+          <div class="hero-label">Status de Performance</div>
+          <div class="hero-status" id="hero-status" style="background: rgba(255, 68, 68, 0.2); color: var(--danger);">Neutro</div>
+        </div>
+      </div>
+
+      <!-- KPIs PRINCIPAIS -->
+      <div class="kpi-grid">
+        <div class="card">
+          <div class="card-label">💰 Investimento</div>
+          <div class="card-value" id="kpi-invest">R$ 0</div>
+          <div class="card-sub">Total gasto</div>
+        </div>
+        <div class="card">
+          <div class="card-label">👁 Impressões</div>
+          <div class="card-value" id="kpi-impressions">0</div>
+          <div class="card-sub">Total exibições</div>
+        </div>
+        <div class="card">
+          <div class="card-label">🖱 Cliques</div>
+          <div class="card-value" id="kpi-clicks">0</div>
+          <div class="card-sub">Para site/app</div>
+        </div>
+        <div class="card">
+          <div class="card-label">📊 CTR</div>
+          <div class="card-value" id="kpi-ctr">0%</div>
+          <div class="card-sub" id="kpi-ctr-msg">Dentro da média</div>
+        </div>
+      </div>
+
+      <!-- GRÁFICOS -->
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">💸 Gasto por dia</div>
+          <div class="chart-container"><canvas id="chartGasto"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">🖱️ Cliques por dia</div>
+          <div class="chart-container"><canvas id="chartCliques"></canvas></div>
+        </div>
+      </div>
+
+      <!-- INSIGHTS -->
+      <div class="card">
+        <div class="card-title">🧠 Diagnóstico Inteligente</div>
+        <div id="insights-box" class="insights-container" style="margin-top: 1rem;">
+          <div class="insight-card">Conecte sua conta Meta para análise automática</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CAMPANHAS -->
+    <div class="section" id="tab-campanhas">
+      <div class="card">
+        <div class="card-title">🎯 Campanhas Ativas</div>
+        <div class="table-wrapper" id="campanhas-table-wrap" style="margin-top: 1rem;">
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Aguardando conexão...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CONJUNTOS -->
+    <div class="section" id="tab-conjuntos">
+      <div class="card">
+        <div class="card-title">📋 Conjuntos de Anúncios</div>
+        <div class="table-wrapper" id="conjuntos-table-wrap" style="margin-top: 1rem;">
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Aguardando conexão...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CRIATIVOS -->
+    <div class="section" id="tab-criativos">
+      <div class="card">
+        <div class="card-title">🎨 Anúncios por Performance</div>
+        <div class="table-wrapper" id="criativos-table-wrap" style="margin-top: 1rem;">
+          <div style="text-align: center; padding: 2rem; color: var(--text-muted);">Aguardando conexão...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: FUNIL -->
+    <div class="section" id="tab-funil">
+      <div class="card">
+        <div class="card-title">📊 Funil de Conversão</div>
+        <div id="funil-visual" style="margin-top: 1.5rem;" class="funnel-container"></div>
+      </div>
+      <div class="card" style="margin-top: 1.5rem;">
+        <div class="card-title">💡 Análise do Funil</div>
+        <div id="funil-insights" style="margin-top: 1rem;"></div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: PÁGINA -->
+    <div class="section" id="tab-pagina">
+      <div class="card">
+        <div class="card-title">🌐 Análise de Landing Page</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem;">
+          <div class="field">
+            <label>URL da Página</label>
+            <input type="text" id="lp-url" placeholder="https://sua-lp.com.br" />
+          </div>
+          <div style="display: flex; align-items: flex-end;">
+            <button class="btn btn-primary" id="btn-analisar" onclick="analisarPagina()" style="width: 100%;">🤖 Analisar com IA</button>
+          </div>
+        </div>
+        <div id="pg-checklist" style="margin-top: 1.5rem;"></div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CALCULADORA -->
+    <div class="section" id="tab-calcular">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">📊 Parâmetros</div>
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="field">
+              <label>Investimento (R$)</label>
+              <input type="number" id="c_invest" value="3000" oninput="calcular()" />
+            </div>
+            <div class="field">
+              <label>CTR Esperado (%)</label>
+              <input type="number" id="c_ctr" value="2.5" step="0.1" oninput="calcular()" />
+            </div>
+            <div class="field">
+              <label>Taxa Conversão (%)</label>
+              <input type="number" id="c_conv_pag" value="12" step="0.1" oninput="calcular()" />
+            </div>
+            <div class="field">
+              <label>Ticket Médio (R$)</label>
+              <input type="number" id="c_ticket" value="297" oninput="calcular()" />
+            </div>
+            <div class="field">
+              <label>Taxa Fechamento (%)</label>
+              <input type="number" id="c_close" value="20" oninput="calcular()" />
+            </div>
+            <div class="field">
+              <label>CPM Estimado (R$)</label>
+              <input type="number" id="c_cpm" value="18" oninput="calcular()" />
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Resultados Estimados</div>
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div>
+              <div class="card-label">Impressões</div>
+              <div class="card-value" style="font-size: 28px;" id="r_imp">0</div>
+            </div>
+            <div>
+              <div class="card-label">Cliques</div>
+              <div class="card-value" style="font-size: 28px;" id="r_cli">0</div>
+            </div>
+            <div>
+              <div class="card-label">Leads</div>
+              <div class="card-value" style="font-size: 28px;" id="r_leads">0</div>
+            </div>
+            <div>
+              <div class="card-label">ROAS</div>
+              <div class="card-value text-success" id="r_roas">0x</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SEÇÃO: CONVERSÕES -->
+    <div class="section" id="tab-conversoes">
+      <div class="grid grid-2">
+        <div class="card">
+          <div class="card-title">📊 Parâmetros do Negócio</div>
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1rem;">
+            <div class="field">
+              <label>Ticket Médio (R$)</label>
+              <input type="number" id="cv_ticket" value="297" oninput="calcConversoes()" />
+            </div>
+            <div class="field">
+              <label>Taxa de Fechamento (%)</label>
+              <input type="number" id="cv_fechamento" value="20" step="1" oninput="calcConversoes()" />
+            </div>
+            <div class="field">
+              <label>Leads Manuais</label>
+              <input type="number" id="cv_leads_manual" value="0" oninput="calcConversoes()" />
+            </div>
+            <div class="field">
+              <label>Investimento Manual (R$)</label>
+              <input type="number" id="cv_invest_manual" value="0" placeholder="0 = usar dados Meta" oninput="calcConversoes()" />
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">🎯 Resultados</div>
+          <div style="margin-top: 1rem; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div>
+              <div class="card-label">Total de Leads</div>
+              <div class="card-value" style="font-size: 28px;" id="cv_leads">0</div>
+            </div>
+            <div>
+              <div class="card-label">CAC</div>
+              <div class="card-value text-primary" style="font-size: 28px;" id="cv_cac">R$ 0</div>
+            </div>
+            <div>
+              <div class="card-label">Valor do Lead</div>
+              <div class="card-value" style="font-size: 28px;" id="cv_vl">R$ 0</div>
+            </div>
+            <div>
+              <div class="card-label">Taxa de Conversão</div>
+              <div class="card-value text-success" id="cv_taxa">0%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+const BASE = 'https://graph.facebook.com/v19.0';
+let TOKEN = '', ACCOUNT = '', TOKEN2 = '', ACCOUNT2 = '', ANTHROPIC_KEY = '';
+let accountSets = [], gastoChart, cliquesChart, dadosGlobais = {};
+
+function salvarConfig() {
+  TOKEN = document.getElementById('cfg_token').value.trim();
+  ACCOUNT = document.getElementById('cfg_account').value.trim().replace(/^act_/, '');
+  TOKEN2 = document.getElementById('cfg_token2').value.trim();
+  ACCOUNT2 = document.getElementById('cfg_account2').value.trim().replace(/^act_/, '');
+  ANTHROPIC_KEY = document.getElementById('cfg_anthropic').value.trim();
+  localStorage.setItem('meta_token', TOKEN);
+  localStorage.setItem('meta_account', ACCOUNT);
+  localStorage.setItem('meta_token2', TOKEN2);
+  localStorage.setItem('meta_account2', ACCOUNT2);
+  localStorage.setItem('anthropic_key', ANTHROPIC_KEY);
+}
+
+function carregarConfig() {
+  try {
+    const t = localStorage.getItem('meta_token');
+    const a = localStorage.getItem('meta_account');
+    const t2 = localStorage.getItem('meta_token2');
+    const a2 = localStorage.getItem('meta_account2');
+    const k = localStorage.getItem('anthropic_key');
+    if (t) document.getElementById('cfg_token').value = t;
+    if (a) document.getElementById('cfg_account').value = a;
+    if (t2) document.getElementById('cfg_token2').value = t2;
+    if (a2) document.getElementById('cfg_account2').value = a2;
+    if (k) document.getElementById('cfg_anthropic').value = k;
+    TOKEN = t || ''; ACCOUNT = a || ''; TOKEN2 = t2 || ''; ACCOUNT2 = a2 || ''; ANTHROPIC_KEY = k || '';
+  } catch(err) { console.error('Erro ao carregar config:', err.message); }
+}
+
+function toggleConfig() { document.getElementById('configPanel').style.display = document.getElementById('configPanel').style.display === 'none' ? 'block' : 'none'; }
+function setStatus(tipo, msg) {
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusMsg');
+  dot.className = 'status-dot ' + tipo;
+  txt.textContent = msg;
+}
+
+async function conectar() {
+  salvarConfig();
+  if ((!TOKEN || !ACCOUNT) && (!TOKEN2 || !ACCOUNT2)) { setStatus('err', 'Preencha pelo menos uma conta'); return; }
+  setStatus('', 'Verificando credenciais…');
+  try {
+    const checks = [];
+    if (TOKEN && ACCOUNT) checks.push(checkAccount(TOKEN, ACCOUNT, 1));
+    if (TOKEN2 && ACCOUNT2) checks.push(checkAccount(TOKEN2, ACCOUNT2, 2));
+    const results = await Promise.allSettled(checks);
+    const valid = results.filter(r => r.status === 'fulfilled').map(r => r.value);
+    const errors = results.filter(r => r.status === 'rejected').map(r => r.reason.message);
+    if (!valid.length) throw new Error(errors[0] || 'Nenhuma conta válida');
+    accountSets = valid.map(v => ({ token: v.token, account: v.account, label: `Conta ${v.index}`, name: v.name }));
+    setStatus('ok', `✓ ${accountSets.length} conta(s) conectada(s)`);
+    document.getElementById('btnAtualizar').disabled = false;
+    toggleConfig();
+    await carregarDados();
+  } catch(e) { setStatus('err', 'Erro: ' + e.message); }
+}
+
+async function checkAccount(token, account, index) {
+  const r = await fetch(`${BASE}/act_${account}?fields=name,currency&access_token=${token}`);
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return { name: d.name, currency: d.currency, index, token, account };
+}
+
+async function carregarDados() {
+  if (!accountSets.length) return;
+  const periodo = document.getElementById('periodo').value;
+  document.getElementById('lastUpdate').textContent = 'Sincronizando…';
+  try {
+    const accountData = [];
+    for (const acc of accountSets) {
+      const [resumo, campanhas, conjuntos, anuncios, diario] = await Promise.all([
+        fetchResumo(periodo, acc.token, acc.account),
+        fetchCampanhas(periodo, acc.token, acc.account),
+        fetchConjuntos(periodo, acc.token, acc.account),
+        fetchAnuncios(periodo, acc.token, acc.account),
+        fetchDiario(periodo, acc.token, acc.account),
+      ]);
+      accountData.push({ label: acc.label, resumo, campanhas, conjuntos, anuncios, diario });
+    }
+    const resumo = aggregateResumos(accountData[0]?.resumo, accountData[1]?.resumo);
+    const campanhas = appendAccountLabel(accountData[0]?.campanhas || [], 'Conta 1').concat(appendAccountLabel(accountData[1]?.campanhas || [], 'Conta 2'));
+    const conjuntos = appendAccountLabel(accountData[0]?.conjuntos || [], 'Conta 1').concat(appendAccountLabel(accountData[1]?.conjuntos || [], 'Conta 2'));
+    const anuncios = appendAccountLabel(accountData[0]?.anuncios || [], 'Conta 1').concat(appendAccountLabel(accountData[1]?.anuncios || [], 'Conta 2'));
+    const diario = aggregateDiario(accountData[0]?.diario || [], accountData[1]?.diario || []);
+    dadosGlobais = { resumo, campanhas, conjuntos, anuncios, diario };
+    renderResumo(resumo);
+    renderCampanhas(campanhas);
+    renderConjuntos(conjuntos);
+    renderAnuncios(anuncios);
+    renderFunil(resumo);
+    renderInsights(resumo, campanhas, anuncios);
+    renderGraficos(diario);
+    preencherCalcComDados(resumo);
+    calcConversoes();
+    const agora = new Date().toLocaleTimeString('pt-BR');
+    document.getElementById('lastUpdate').textContent = `Último sync: ${agora}`;
+  } catch(e) { document.getElementById('lastUpdate').textContent = 'Erro: ' + e.message; }
+}
+
+async function api(path, params = {}, token = TOKEN) {
+  const url = new URL(`${BASE}/${path}`);
+  url.searchParams.set('access_token', token);
+  Object.entries(params).forEach(([k,v]) => url.searchParams.set(k, v));
+  const r = await fetch(url.toString());
+  const d = await r.json();
+  if (d.error) throw new Error(d.error.message);
+  return d;
+}
+
+async function fetchResumo(periodo, token, account) {
+  const d = await api(`act_${account}/insights`, { fields: 'spend,impressions,clicks,ctr,cpm,cpc,reach,frequency,actions', date_preset: periodo, level: 'account' }, token);
+  return d.data?.[0] || {};
+}
+
+async function fetchCampanhas(periodo, token, account) {
+  const d = await api(`act_${account}/campaigns`, { fields: `name,status,objective,insights.date_preset(${periodo}){spend,impressions,clicks,ctr,cpm,cpc,actions,cost_per_result}`, limit: 25 }, token);
+  return d.data || [];
+}
+
+async function fetchConjuntos(periodo, token, account) {
+  const d = await api(`act_${account}/adsets`, { fields: `name,status,targeting,insights.date_preset(${periodo}){spend,impressions,clicks,ctr,cpm,cpc,actions,cost_per_result}`, limit: 30 }, token);
+  return d.data || [];
+}
+
+async function fetchAnuncios(periodo, token, account) {
+  const d = await api(`act_${account}/ads`, { fields: `name,status,creative{thumbnail_url,title},insights.date_preset(${periodo}){spend,impressions,clicks,ctr,cpm,cpc,actions,cost_per_result}`, limit: 30 }, token);
+  return d.data || [];
+}
+
+async function fetchDiario(periodo, token, account) {
+  const d = await api(`act_${account}/insights`, { fields: 'spend,clicks,impressions', date_preset: periodo, time_increment: 1, level: 'account' }, token);
+  return d.data || [];
+}
+
+function mergeActions(actions1 = [], actions2 = []) {
+  const merged = [], map = new Map();
+  [...actions1, ...actions2].forEach(item => {
+    const key = item.action_type;
+    if (!map.has(key)) map.set(key, { ...item, value: parseFloat(item.value || 0) });
+    else map.get(key).value += parseFloat(item.value || 0);
+  });
+  map.forEach(v => merged.push(v));
+  return merged;
+}
+
+function aggregateResumos(a, b) {
+  if (!a) return b || {}; if (!b) return a || {};
+  const spend = parseFloat(a.spend || 0) + parseFloat(b.spend || 0);
+  const impressions = parseFloat(a.impressions || 0) + parseFloat(b.impressions || 0);
+  const clicks = parseFloat(a.clicks || 0) + parseFloat(b.clicks || 0);
+  const reach = parseFloat(a.reach || 0) + parseFloat(b.reach || 0);
+  const frequency = (parseFloat(a.frequency || 0) * parseFloat(a.impressions || 0) + parseFloat(b.frequency || 0) * parseFloat(b.impressions || 0)) / Math.max(1, impressions);
+  const ctr = impressions ? (clicks / impressions) * 100 : 0;
+  const cpm = impressions ? (spend / impressions) * 1000 : 0;
+  const cpc = clicks ? (spend / clicks) : 0;
+  return { spend, impressions, clicks, ctr: ctr.toFixed(2), cpm: cpm.toFixed(2), cpc: cpc.toFixed(2), reach, frequency: frequency.toFixed(2), actions: mergeActions(a.actions || [], b.actions || []) };
+}
+
+function appendAccountLabel(list, label) { return (list || []).map(item => ({ ...item, accountLabel: label })); }
+
+function aggregateDiario(d1 = [], d2 = []) {
+  const map = new Map();
+  [...d1, ...d2].forEach(item => {
+    const date = item.date_start;
+    if (!map.has(date)) map.set(date, { ...item, spend: parseFloat(item.spend || 0), clicks: parseFloat(item.clicks || 0), impressions: parseFloat(item.impressions || 0) });
+    else {
+      const current = map.get(date);
+      current.spend += parseFloat(item.spend || 0);
+      current.clicks += parseFloat(item.clicks || 0);
+      current.impressions += parseFloat(item.impressions || 0);
+    }
+  });
+  return Array.from(map.values()).sort((a, b) => a.date_start.localeCompare(b.date_start));
+}
+
+function renderResumo(r) {
+  const spend = parseFloat(r.spend || 0), clicks = parseFloat(r.clicks || 0), ctr = parseFloat(r.ctr || 0), cpc = parseFloat(r.cpc || 0), cpm = parseFloat(r.cpm || 0);
+  let roas = 0;
+  if (spend > 0 && clicks > 0) roas = (clicks * 2) / spend;
+  document.getElementById('hero-roas').textContent = roas > 0 ? roas.toFixed(2) + 'x' : '–';
+  document.getElementById('hero-invest').textContent = 'R$ ' + spend.toFixed(2);
+  let status = 'Neutro', msg = 'Dados insuficientes', color = 'rgba(255, 68, 68, 0.2)';
+  if (roas >= 3) { status = '✓ Alta Performance'; msg = 'Escale agora'; color = 'rgba(29, 158, 117, 0.2)'; }
+  else if (roas >= 1.5) { status = '⚠ Estável'; msg = 'Há espaço para otimizar'; color = 'rgba(255, 165, 0, 0.2)'; }
+  else if (roas > 0) { status = '✗ Crítico'; msg = 'Revise sua estratégia'; color = 'rgba(255, 68, 68, 0.2)'; }
+  document.getElementById('hero-roas-msg').textContent = msg;
+  document.getElementById('hero-status').textContent = status;
+  document.getElementById('hero-status').style.background = color;
+  document.getElementById('kpi-invest').textContent = 'R$ ' + spend.toFixed(2);
+  document.getElementById('kpi-impressions').textContent = parseInt(r.impressions || 0).toLocaleString('pt-BR');
+  document.getElementById('kpi-clicks').textContent = parseInt(r.clicks || 0).toLocaleString('pt-BR');
+  document.getElementById('kpi-ctr').textContent = ctr > 0 ? ctr.toFixed(2) + '%' : '–';
+  let ctrMsg = 'Dentro da média'; if (ctr < 1.5) ctrMsg = 'Melhorar criativo'; else if (ctr > 3) ctrMsg = 'Ótimo desempenho';
+  document.getElementById('kpi-ctr-msg').textContent = ctrMsg;
+}
+
+function renderCampanhas(list) {
+  if (!list.length) { document.getElementById('campanhas-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem campanhas</div>'; return; }
+  const rows = list.map(c => {
+    const ins = c.insights?.data?.[0] || {};
+    const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
+    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${(ins.ctr||0).toFixed(2)}%</td><td>R$ ${parseFloat(ins.cpm||0).toFixed(2)}</td></tr>`;
+  }).join('');
+  document.getElementById('campanhas-table-wrap').innerHTML = `<table><thead><tr><th>Campanha</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th><th>CPM</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderConjuntos(list) {
+  if (!list.length) { document.getElementById('conjuntos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem conjuntos</div>'; return; }
+  const rows = list.map(c => {
+    const ins = c.insights?.data?.[0] || {};
+    const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
+    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${(ins.ctr||0).toFixed(2)}%</td></tr>`;
+  }).join('');
+  document.getElementById('conjuntos-table-wrap').innerHTML = `<table><thead><tr><th>Conjunto</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderAnuncios(list) {
+  if (!list.length) { document.getElementById('criativos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem anúncios</div>'; return; }
+  const sorted = [...list].sort((a,b) => parseFloat(b.insights?.data?.[0]?.ctr||0) - parseFloat(a.insights?.data?.[0]?.ctr||0));
+  const maxCtr = parseFloat(sorted[0]?.insights?.data?.[0]?.ctr || 1);
+  const rows = sorted.map(a => {
+    const ins = a.insights?.data?.[0] || {};
+    const ctr = parseFloat(ins.ctr || 0);
+    const score = Math.round((ctr / maxCtr) * 100);
+    const scoreColor = score >= 75 ? '#1D9E75' : score >= 50 ? '#FFA500' : '#FF4444';
+    return `<tr><td>${a.name.substring(0,35)}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${(ins.ctr||0).toFixed(2)}%</td><td><span style="color:${scoreColor};font-weight:700;">${score}</span></td></tr>`;
+  }).join('');
+  document.getElementById('criativos-table-wrap').innerHTML = `<table><thead><tr><th>Anúncio</th><th>Gasto</th><th>CTR</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderFunil(r) {
+  const imp = parseInt(r.impressions || 0), cli = parseInt(r.clicks || 0), reach = parseInt(r.reach || 0);
+  const results = r.actions?.find(a => ['lead','offsite_conversion.fb_pixel_lead','omni_lead'].includes(a.action_type));
+  const leads = results ? parseInt(results.value) : 0;
+  const etapas = [
+    { label: 'Impressões', val: imp, cor: '#00D9FF' },
+    { label: 'Cliques', val: cli, cor: '#FFD700' },
+    { label: 'Leads', val: leads, cor: '#1D9E75' }
+  ].filter(e => e.val > 0);
+  if (!etapas.length) return;
+  const maxV = etapas[0].val;
+  document.getElementById('funil-visual').innerHTML = etapas.map((e, i) => {
+    const w = Math.max(8, (e.val/maxV)*100);
+    const conv = i === 0 ? '100%' : `${((e.val/etapas[i-1].val)*100).toFixed(1)}%`;
+    return `<div class="funnel-stage"><div class="funnel-label">${e.label}</div><div class="funnel-bar-wrapper"><div class="funnel-bar" style="width:${w}%;background:${e.cor}">${e.val.toLocaleString('pt-BR')}</div></div><div class="funnel-pct">${conv}</div></div>`;
+  }).join('');
+}
+
+function renderInsights(resumo, campanhas, anuncios) {
+  const insights = [];
+  const ctr = parseFloat(resumo.ctr || 0);
+  if (ctr > 3) insights.push(`CTR ${ctr.toFixed(2)}% — Excelente performance`);
+  else if (ctr < 1.5) insights.push(`CTR ${ctr.toFixed(2)}% — Teste novos criativos`);
+  if (!insights.length) insights.push('Dados carregados com sucesso');
+  document.getElementById('insights-box').innerHTML = insights.map(i => `<div class="insight-card">${i}</div>`).join('');
+}
+
+function renderGraficos(diario) {
+  const labels = diario.map(d => { const dt = new Date(d.date_start); return `${dt.getDate()}/${dt.getMonth()+1}`; });
+  const gastos = diario.map(d => parseFloat(d.spend||0));
+  const cliques = diario.map(d => parseInt(d.clicks||0));
+  if (gastoChart) gastoChart.destroy(); if (cliquesChart) cliquesChart.destroy();
+  gastoChart = new Chart(document.getElementById('chartGasto'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: gastos, backgroundColor: '#00D9FF', borderRadius: 4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+  });
+  cliquesChart = new Chart(document.getElementById('chartCliques'), {
+    type: 'line',
+    data: { labels, datasets: [{ data: cliques, borderColor: '#FFD700', backgroundColor: 'rgba(255,215,0,0.1)', borderWidth: 2, fill: true, tension: 0.4 }] },
+    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+  });
+}
+
+function preencherCalcComDados(resumo) {
+  if (resumo.ctr) document.getElementById('c_ctr').value = parseFloat(resumo.ctr).toFixed(2);
+  if (resumo.cpm) document.getElementById('c_cpm').value = parseFloat(resumo.cpm).toFixed(2);
+  calcular();
+}
+
+function calcular() {
+  try {
+    const invest = parseFloat(document.getElementById('c_invest').value)||0, ctr = parseFloat(document.getElementById('c_ctr').value)||0;
+    const convPag = parseFloat(document.getElementById('c_conv_pag').value)||0, ticket = parseFloat(document.getElementById('c_ticket').value)||0;
+    const close = parseFloat(document.getElementById('c_close').value)||0, cpm = parseFloat(document.getElementById('c_cpm').value)||1;
+    const imp = Math.round((invest/cpm)*1000), cli = Math.round(imp*(ctr/100));
+    const leads = Math.round(cli*(convPag/100)), vendas = Math.round(leads*(close/100));
+    const receita = vendas * ticket, roas = invest > 0 ? receita/invest : 0;
+    document.getElementById('r_imp').textContent = imp.toLocaleString('pt-BR');
+    document.getElementById('r_cli').textContent = cli.toLocaleString('pt-BR');
+    document.getElementById('r_leads').textContent = leads.toLocaleString('pt-BR');
+    document.getElementById('r_roas').textContent = roas.toFixed(1) + 'x';
+  } catch(e) { console.error('Erro em calcular():', e.message); }
+}
+
+function showTab(id, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+
+async function analisarPagina() {
+  alert('Funcionalidade de análise com IA em desenvolvimento');
+}
+
+function calcConversoes() {
+  const r = dadosGlobais.resumo || {};
+  document.getElementById('cv_leads').textContent = parseInt(r.clicks||0).toLocaleString('pt-BR');
+}
+
+try {
+  console.log('🚀 Carregando aplicação...');
+  carregarConfig();
+  calcConversoes();
+  if (accountSets.length > 0) {
+    document.getElementById('btnAtualizar').disabled = false;
+    setStatus('ok', '✓ Pronto para usar');
+  }
+} catch(err) {
+  console.error('❌ Erro:', err.message);
+  setStatus('err', 'Erro na inicialização');
+}
+  </script>
+</body>
+</html>
