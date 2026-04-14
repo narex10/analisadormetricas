@@ -575,6 +575,12 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script>
+// ✅ VERIFICAÇÃO BÁSICA DE CARREGAMENTO
+window.LOG_ENABLED = true;
+window.SCRIPT_LOADED = true;
+console.log('✅ SCRIPT INICIANDO - Vercel Environment');
+alert('✅ SCRIPT.JS CARREGADO COM SUCESSO!\n\nLocalStorage disponível: ' + (typeof localStorage !== 'undefined' ? 'SIM ✅' : 'NÃO ❌'));
+
 // ─── CONFIG ────────────────────────────────────────────────────────────────
 const BASE = 'https://graph.facebook.com/v19.0';
 let TOKEN = '';
@@ -587,16 +593,24 @@ let gastoChart, cliquesChart;
 let dadosGlobais = {};
 
 function salvarConfig() {
-  TOKEN = document.getElementById('cfg_token').value.trim();
-  ACCOUNT = document.getElementById('cfg_account').value.trim().replace(/^act_/, '');
-  TOKEN2 = document.getElementById('cfg_token2').value.trim();
-  ACCOUNT2 = document.getElementById('cfg_account2').value.trim().replace(/^act_/, '');
-  ANTHROPIC_KEY = document.getElementById('cfg_anthropic').value.trim();
-  localStorage.setItem('meta_token', TOKEN);
-  localStorage.setItem('meta_account', ACCOUNT);
-  localStorage.setItem('meta_token2', TOKEN2);
-  localStorage.setItem('meta_account2', ACCOUNT2);
-  localStorage.setItem('anthropic_key', ANTHROPIC_KEY);
+  try {
+    console.log('💾 Salvando config...');
+    TOKEN = document.getElementById('cfg_token').value.trim();
+    ACCOUNT = document.getElementById('cfg_account').value.trim().replace(/^act_/, '');
+    TOKEN2 = document.getElementById('cfg_token2').value.trim();
+    ACCOUNT2 = document.getElementById('cfg_account2').value.trim().replace(/^act_/, '');
+    ANTHROPIC_KEY = document.getElementById('cfg_anthropic').value.trim();
+    
+    localStorage.setItem('meta_token', TOKEN);
+    localStorage.setItem('meta_account', ACCOUNT);
+    localStorage.setItem('meta_token2', TOKEN2);
+    localStorage.setItem('meta_account2', ACCOUNT2);
+    localStorage.setItem('anthropic_key', ANTHROPIC_KEY);
+    console.log('✅ Config salva com sucesso');
+  } catch(e) {
+    console.error('❌ Erro ao salvar config:', e.message);
+    alert('❌ Erro ao salvar config no localStorage:\n' + e.message);
+  }
 }
 
 function carregarConfig() {
@@ -1526,7 +1540,6 @@ function calcConversoes() {
 
 try {
   console.log('🚀 Iniciando aplicação...');
-  alert('🚀 Script carregado! Inicializando...');
   
   console.log('1️⃣ Carregando configurações...');
   carregarConfig();
