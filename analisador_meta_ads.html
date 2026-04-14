@@ -616,6 +616,17 @@
       </div>
     </div>
 
+    <!-- DATA STATUS PANEL -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 1rem; margin-bottom: 1.5rem; font-size: 12px; display: none;" id="statusData">
+      <div style="font-weight: 700; margin-bottom: 0.5rem; color: var(--primary);">📊 Status de Dados Carregados:</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+        <div><span style="color: var(--text-muted);">Campanhas:</span> <span id="dataStatus-campanhas">0</span></div>
+        <div><span style="color: var(--text-muted);">Conjuntos:</span> <span id="dataStatus-conjuntos">0</span></div>
+        <div><span style="color: var(--text-muted);">Anúncios:</span> <span id="dataStatus-anuncios">0</span></div>
+        <div><span style="color: var(--text-muted);">Dados Diários:</span> <span id="dataStatus-diario">0</span></div>
+      </div>
+    </div>
+
     <!-- CONFIG PANEL -->
     <div class="config-panel" id="configPanel">
       <h2>🔐 Configurar Meta Ads</h2>
@@ -644,6 +655,7 @@
       <div class="config-actions">
         <button class="btn btn-primary" onclick="conectar()">✓ Conectar</button>
         <button class="btn" onclick="toggleConfig()">← Fechar</button>
+        <button class="btn" onclick="console.log('Console aberto - Verifique acima os logs de debug'); console.log('Dados globais:', dadosGlobais);">🔍 Debug</button>
         <div class="status-indicator">
           <div class="status-dot" id="statusDot"></div>
           <span id="statusMsg" style="color: var(--text-muted); font-size: 13px;">Preencha as credenciais</span>
@@ -976,6 +988,7 @@ async function carregarDados() {
         fetchAnuncios(periodo, acc.token, acc.account),
         fetchDiario(periodo, acc.token, acc.account),
       ]);
+      console.log(`📊 Dados da ${acc.label}:`, { campanhas: campanhas.length, conjuntos: conjuntos.length, anuncios: anuncios.length });
       accountData.push({ label: acc.label, resumo, campanhas, conjuntos, anuncios, diario });
     }
     const resumo = aggregateResumos(accountData[0]?.resumo, accountData[1]?.resumo);
@@ -983,7 +996,16 @@ async function carregarDados() {
     const conjuntos = appendAccountLabel(accountData[0]?.conjuntos || [], 'Conta 1').concat(appendAccountLabel(accountData[1]?.conjuntos || [], 'Conta 2'));
     const anuncios = appendAccountLabel(accountData[0]?.anuncios || [], 'Conta 1').concat(appendAccountLabel(accountData[1]?.anuncios || [], 'Conta 2'));
     const diario = aggregateDiario(accountData[0]?.diario || [], accountData[1]?.diario || []);
+    console.log('🎯 Dados agregados:', { campanhas: campanhas.length, conjuntos: conjuntos.length, anuncios: anuncios.length, diario: diario.length });
     dadosGlobais = { resumo, campanhas, conjuntos, anuncios, diario };
+    
+    // Atualizar painel de status de dados
+    document.getElementById('statusData').style.display = 'block';
+    document.getElementById('dataStatus-campanhas').textContent = campanhas.length;
+    document.getElementById('dataStatus-conjuntos').textContent = conjuntos.length;
+    document.getElementById('dataStatus-anuncios').textContent = anuncios.length;
+    document.getElementById('dataStatus-diario').textContent = diario.length;
+    
     renderResumo(resumo);
     renderCampanhas(campanhas);
     renderConjuntos(conjuntos);
@@ -995,7 +1017,7 @@ async function carregarDados() {
     calcConversoes();
     const agora = new Date().toLocaleTimeString('pt-BR');
     document.getElementById('lastUpdate').textContent = `Último sync: ${agora}`;
-  } catch(e) { document.getElementById('lastUpdate').textContent = 'Erro: ' + e.message; }
+  } catch(e) { console.error('❌ Erro ao carregar:', e); document.getElementById('lastUpdate').textContent = 'Erro: ' + e.message; }
 }
 
 async function api(path, params = {}, token = TOKEN) {
@@ -1096,81 +1118,104 @@ function renderResumo(r) {
 }
 
 function renderCampanhas(list) {
-  if (!list.length) { document.getElementById('campanhas-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem campanhas</div>'; return; }
-  const rows = list.map(c => {
-    const ins = c.insights?.data?.[0] || {};
-    const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
-    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td><td>R$ ${parseFloat(ins.cpm||0).toFixed(2)}</td></tr>`;
-  }).join('');
-  document.getElementById('campanhas-table-wrap').innerHTML = `<table><thead><tr><th>Campanha</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th><th>CPM</th></tr></thead><tbody>${rows}</tbody></table>`;
+  console.log('📈 renderCampanhas recebeu:', list.length, 'campanhas');
+  if (!list.length) { document.getElementById('campanhas-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhuma campanha encontrada - Conecte e carregue dados</div>'; return; }
+  try {
+    const rows = list.map(c => {
+      const ins = c.insights?.data?.[0] || {};
+      const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
+      return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td><td>R$ ${parseFloat(ins.cpm||0).toFixed(2)}</td></tr>`;
+    }).join('');
+    document.getElementById('campanhas-table-wrap').innerHTML = `<table><thead><tr><th>Campanha</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th><th>CPM</th></tr></thead><tbody>${rows}</tbody></table>`;
+  } catch(e) { console.error('Erro em renderCampanhas:', e); document.getElementById('campanhas-table-wrap').innerHTML = `<div style="color:red;padding:1rem;">Erro ao renderizar: ${e.message}</div>`; }
 }
 
 function renderConjuntos(list) {
-  if (!list.length) { document.getElementById('conjuntos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem conjuntos</div>'; return; }
-  const rows = list.map(c => {
-    const ins = c.insights?.data?.[0] || {};
-    const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
-    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td></tr>`;
-  }).join('');
-  document.getElementById('conjuntos-table-wrap').innerHTML = `<table><thead><tr><th>Conjunto</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th></tr></thead><tbody>${rows}</tbody></table>`;
+  console.log('📋 renderConjuntos recebeu:', list.length, 'conjuntos');
+  if (!list.length) { document.getElementById('conjuntos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum conjunto encontrado - Conecte e carregue dados</div>'; return; }
+  try {
+    const rows = list.map(c => {
+      const ins = c.insights?.data?.[0] || {};
+      const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
+      return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td></tr>`;
+    }).join('');
+    document.getElementById('conjuntos-table-wrap').innerHTML = `<table><thead><tr><th>Conjunto</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th></tr></thead><tbody>${rows}</tbody></table>`;
+  } catch(e) { console.error('Erro em renderConjuntos:', e); document.getElementById('conjuntos-table-wrap').innerHTML = `<div style="color:red;padding:1rem;">Erro ao renderizar: ${e.message}</div>`; }
 }
 
 function renderAnuncios(list) {
-  if (!list.length) { document.getElementById('criativos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Sem anúncios</div>'; return; }
-  const sorted = [...list].sort((a,b) => parseFloat(b.insights?.data?.[0]?.ctr||0) - parseFloat(a.insights?.data?.[0]?.ctr||0));
-  const maxCtr = parseFloat(sorted[0]?.insights?.data?.[0]?.ctr || 1);
-  const rows = sorted.map(a => {
-    const ins = a.insights?.data?.[0] || {};
-    const ctr = parseFloat(ins.ctr || 0);
-    const score = Math.round((ctr / maxCtr) * 100);
-    const scoreColor = score >= 75 ? '#1D9E75' : score >= 50 ? '#FFA500' : '#FF4444';
-    return `<tr><td>${a.name.substring(0,35)}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${ctr.toFixed(2)}%</td><td><span style="color:${scoreColor};font-weight:700;">${score}</span></td></tr>`;
-  }).join('');
-  document.getElementById('criativos-table-wrap').innerHTML = `<table><thead><tr><th>Anúncio</th><th>Gasto</th><th>CTR</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+  console.log('🎨 renderAnuncios recebeu:', list.length, 'anúncios');
+  if (!list.length) { document.getElementById('criativos-table-wrap').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted);">Nenhum anúncio encontrado - Conecte e carregue dados</div>'; return; }
+  try {
+    const sorted = [...list].sort((a,b) => parseFloat(b.insights?.data?.[0]?.ctr||0) - parseFloat(a.insights?.data?.[0]?.ctr||0));
+    const maxCtr = parseFloat(sorted[0]?.insights?.data?.[0]?.ctr || 1);
+    const rows = sorted.map(a => {
+      const ins = a.insights?.data?.[0] || {};
+      const ctr = parseFloat(ins.ctr || 0);
+      const score = Math.round((ctr / maxCtr) * 100);
+      const scoreColor = score >= 75 ? '#1D9E75' : score >= 50 ? '#FFA500' : '#FF4444';
+      return `<tr><td>${a.name.substring(0,35)}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${ctr.toFixed(2)}%</td><td><span style="color:${scoreColor};font-weight:700;">${score}</span></td></tr>`;
+    }).join('');
+    document.getElementById('criativos-table-wrap').innerHTML = `<table><thead><tr><th>Anúncio</th><th>Gasto</th><th>CTR</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
+  } catch(e) { console.error('Erro em renderAnuncios:', e); document.getElementById('criativos-table-wrap').innerHTML = `<div style="color:red;padding:1rem;">Erro ao renderizar: ${e.message}</div>`; }
 }
 
 function renderFunil(r) {
-  const imp = parseInt(r.impressions || 0), cli = parseInt(r.clicks || 0), reach = parseInt(r.reach || 0);
-  const results = r.actions?.find(a => ['lead','offsite_conversion.fb_pixel_lead','omni_lead'].includes(a.action_type));
-  const leads = results ? parseInt(results.value) : 0;
-  const etapas = [
-    { label: 'Impressões', val: imp, cor: '#00D9FF' },
-    { label: 'Cliques', val: cli, cor: '#FFD700' },
-    { label: 'Leads', val: leads, cor: '#1D9E75' }
-  ].filter(e => e.val > 0);
-  if (!etapas.length) return;
-  const maxV = etapas[0].val;
-  document.getElementById('funil-visual').innerHTML = etapas.map((e, i) => {
-    const w = Math.max(8, (e.val/maxV)*100);
-    const conv = i === 0 ? '100%' : `${((e.val/etapas[i-1].val)*100).toFixed(1)}%`;
-    return `<div class="funnel-stage"><div class="funnel-label">${e.label}</div><div class="funnel-bar-wrapper"><div class="funnel-bar" style="width:${w}%;background:${e.cor}">${e.val.toLocaleString('pt-BR')}</div></div><div class="funnel-pct">${conv}</div></div>`;
-  }).join('');
+  try {
+    const imp = parseInt(r.impressions || 0), cli = parseInt(r.clicks || 0), reach = parseInt(r.reach || 0);
+    const results = r.actions?.find(a => ['lead','offsite_conversion.fb_pixel_lead','omni_lead'].includes(a.action_type));
+    const leads = results ? parseInt(results.value) : 0;
+    console.log('📊 Funil:', { impressoes: imp, cliques: cli, leads });
+    const etapas = [
+      { label: 'Impressões', val: imp, cor: '#00D9FF' },
+      { label: 'Cliques', val: cli, cor: '#FFD700' },
+      { label: 'Leads', val: leads, cor: '#1D9E75' }
+    ].filter(e => e.val > 0);
+    if (!etapas.length) { document.getElementById('funil-visual').innerHTML = '<div style="padding:2rem;color:var(--text-muted);">Sem dados no funil - Conecte sua conta Meta e carregue dados de campanhas</div>'; return; }
+    const maxV = etapas[0].val;
+    document.getElementById('funil-visual').innerHTML = etapas.map((e, i) => {
+      const w = Math.max(8, (e.val/maxV)*100);
+      const conv = i === 0 ? '100%' : `${((e.val/etapas[i-1].val)*100).toFixed(1)}%`;
+      return `<div class="funnel-stage"><div class="funnel-label">${e.label}</div><div class="funnel-bar-wrapper"><div class="funnel-bar" style="width:${w}%;background:${e.cor}">${e.val.toLocaleString('pt-BR')}</div></div><div class="funnel-pct">${conv}</div></div>`;
+    }).join('');
+  } catch(e) { console.error('Erro em renderFunil:', e); document.getElementById('funil-visual').innerHTML = `<div style="color:red;padding:1rem;">Erro: ${e.message}</div>`; }
 }
 
 function renderInsights(resumo, campanhas, anuncios) {
-  const insights = [];
-  const ctr = parseFloat(resumo.ctr || 0);
-  if (ctr > 3) insights.push(`CTR ${ctr.toFixed(2)}% — Excelente performance`);
-  else if (ctr < 1.5) insights.push(`CTR ${ctr.toFixed(2)}% — Teste novos criativos`);
-  if (!insights.length) insights.push('Dados carregados com sucesso');
-  document.getElementById('insights-box').innerHTML = insights.map(i => `<div class="insight-card">${i}</div>`).join('');
+  try {
+    console.log('🧠 Gerando insights...');
+    const insights = [];
+    const ctr = parseFloat(resumo.ctr || 0);
+    if (ctr > 3) insights.push(`✓ CTR ${ctr.toFixed(2)}% — Excelente performance`);
+    else if (ctr < 1.5) insights.push(`⚠ CTR ${ctr.toFixed(2)}% — Teste novos criativos`);
+    else insights.push(`📊 CTR ${ctr.toFixed(2)}% — Dentro da média`);
+    if (campanhas.length > 0) insights.push(`🎯 ${campanhas.length} campanha(s) analisada(s)`);
+    if (anuncios.length > 0) insights.push(`🎨 ${anuncios.length} anúncio(s) em andamento`);
+    if (!insights.length) insights.push('Conecte sua conta Meta para análise automática');
+    document.getElementById('insights-box').innerHTML = insights.map(i => `<div class="insight-card">${i}</div>`).join('');
+  } catch(e) { console.error('Erro em renderInsights:', e); }
 }
 
 function renderGraficos(diario) {
-  const labels = diario.map(d => { const dt = new Date(d.date_start); return `${dt.getDate()}/${dt.getMonth()+1}`; });
-  const gastos = diario.map(d => parseFloat(d.spend||0));
-  const cliques = diario.map(d => parseInt(d.clicks||0));
-  if (gastoChart) gastoChart.destroy(); if (cliquesChart) cliquesChart.destroy();
-  gastoChart = new Chart(document.getElementById('chartGasto'), {
-    type: 'bar',
-    data: { labels, datasets: [{ data: gastos, backgroundColor: '#00D9FF', borderRadius: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
-  });
-  cliquesChart = new Chart(document.getElementById('chartCliques'), {
-    type: 'line',
-    data: { labels, datasets: [{ data: cliques, borderColor: '#FFD700', backgroundColor: 'rgba(255,215,0,0.1)', borderWidth: 2, fill: true, tension: 0.4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
-  });
+  try {
+    console.log('📈 renderGraficos recebeu:', diario.length, 'registros diários');
+    if (!diario.length) { console.warn('⚠ Sem dados diários para gráficos'); return; }
+    const labels = diario.map(d => { const dt = new Date(d.date_start); return `${dt.getDate()}/${dt.getMonth()+1}`; });
+    const gastos = diario.map(d => parseFloat(d.spend||0));
+    const cliques = diario.map(d => parseInt(d.clicks||0));
+    if (gastoChart) gastoChart.destroy(); if (cliquesChart) cliquesChart.destroy();
+    gastoChart = new Chart(document.getElementById('chartGasto'), {
+      type: 'bar',
+      data: { labels, datasets: [{ data: gastos, backgroundColor: '#00D9FF', borderRadius: 4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+    });
+    cliquesChart = new Chart(document.getElementById('chartCliques'), {
+      type: 'line',
+      data: { labels, datasets: [{ data: cliques, borderColor: '#FFD700', backgroundColor: 'rgba(255,215,0,0.1)', borderWidth: 2, fill: true, tension: 0.4 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+    });
+    console.log('✅ Gráficos renderizados com sucesso');
+  } catch(e) { console.error('❌ Erro em renderGraficos:', e); }
 }
 
 function preencherCalcComDados(resumo) {
@@ -1206,8 +1251,14 @@ async function analisarPagina() {
 }
 
 function calcConversoes() {
-  const r = dadosGlobais.resumo || {};
-  document.getElementById('cv_leads').textContent = parseInt(r.clicks||0).toLocaleString('pt-BR');
+  try {
+    const r = dadosGlobais.resumo || {};
+    const clicks = parseInt(r.clicks||0);
+    const leads = r.actions?.find(a => ['lead','offsite_conversion.fb_pixel_lead','omni_lead'].includes(a.action_type));
+    const leadQty = leads ? parseInt(leads.value) : 0;
+    document.getElementById('cv_leads').textContent = leadQty > 0 ? leadQty.toLocaleString('pt-BR') : clicks.toLocaleString('pt-BR');
+    console.log('✓ Conversões:', { clicks, leads: leadQty });
+  } catch(e) { console.error('Erro em calcConversoes:', e); }
 }
 
 try {
