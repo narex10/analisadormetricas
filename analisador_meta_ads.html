@@ -1100,7 +1100,7 @@ function renderCampanhas(list) {
   const rows = list.map(c => {
     const ins = c.insights?.data?.[0] || {};
     const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
-    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${(ins.ctr||0).toFixed(2)}%</td><td>R$ ${parseFloat(ins.cpm||0).toFixed(2)}</td></tr>`;
+    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td><td>R$ ${parseFloat(ins.cpm||0).toFixed(2)}</td></tr>`;
   }).join('');
   document.getElementById('campanhas-table-wrap').innerHTML = `<table><thead><tr><th>Campanha</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th><th>CPM</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -1110,7 +1110,7 @@ function renderConjuntos(list) {
   const rows = list.map(c => {
     const ins = c.insights?.data?.[0] || {};
     const status = c.status === 'ACTIVE' ? '<span class="status-badge status-active">ativo</span>' : '<span class="status-badge status-paused">pausado</span>';
-    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${(ins.ctr||0).toFixed(2)}%</td></tr>`;
+    return `<tr><td>${c.name}</td><td>${status}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${parseInt(ins.impressions||0).toLocaleString('pt-BR')}</td><td>${parseFloat(ins.ctr||0).toFixed(2)}%</td></tr>`;
   }).join('');
   document.getElementById('conjuntos-table-wrap').innerHTML = `<table><thead><tr><th>Conjunto</th><th>Status</th><th>Gasto</th><th>Impressões</th><th>CTR</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
@@ -1124,7 +1124,7 @@ function renderAnuncios(list) {
     const ctr = parseFloat(ins.ctr || 0);
     const score = Math.round((ctr / maxCtr) * 100);
     const scoreColor = score >= 75 ? '#1D9E75' : score >= 50 ? '#FFA500' : '#FF4444';
-    return `<tr><td>${a.name.substring(0,35)}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${(ins.ctr||0).toFixed(2)}%</td><td><span style="color:${scoreColor};font-weight:700;">${score}</span></td></tr>`;
+    return `<tr><td>${a.name.substring(0,35)}</td><td>R$ ${parseFloat(ins.spend||0).toFixed(2)}</td><td>${ctr.toFixed(2)}%</td><td><span style="color:${scoreColor};font-weight:700;">${score}</span></td></tr>`;
   }).join('');
   document.getElementById('criativos-table-wrap').innerHTML = `<table><thead><tr><th>Anúncio</th><th>Gasto</th><th>CTR</th><th>Score</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
