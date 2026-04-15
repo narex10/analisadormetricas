@@ -378,6 +378,32 @@ function setStatus(msg, tipo = 'info') {
 }
 
 // ─── API ────────────────────────────────────────────────────────────────
+function normalizeData(data) {
+  if (!data) return data;
+  
+  // Se for array, normalizar cada item
+  if (Array.isArray(data)) {
+    return data.map(item => normalizeData(item));
+  }
+  
+  // Se for objeto, normalizar propriedades numéricas
+  if (typeof data === 'object') {
+    const normalized = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (['spend', 'impressions', 'clicks', 'reach', 'frequency'].includes(key)) {
+        // Campos que devem ser números
+        const num = parseFloat(value);
+        normalized[key] = isNaN(num) ? 0 : num;
+      } else {
+        normalized[key] = value;
+      }
+    }
+    return normalized;
+  }
+  
+  return data;
+}
+
 async function fetchAPI(endpoint, params = {}) {
   try {
     console.log(`📡 Fetch:`, endpoint);
@@ -391,6 +417,11 @@ async function fetchAPI(endpoint, params = {}) {
     if (d.error) {
       console.error(`❌ API Error:`, d.error.message);
       throw new Error(d.error.message);
+    }
+    
+    // Normalizar dados da API
+    if (d.data) {
+      d.data = normalizeData(d.data);
     }
     
     console.log(`✅ ${endpoint}:`, d.data?.length || 'OK');
@@ -454,17 +485,23 @@ async function carregarDados() {
       fetchAPI(`act_${ACCOUNT}/ads`, { fields: 'id,name,status,spend,impressions,clicks', limit: 1000 })
     ]);
     
-    console.log('📊 Dados recebidos:', {
-      resumo: Object.keys(resumo.data?.[0] || {}),
-      campanhas: campanhas.data?.length,
-      conjuntos: conjuntos.data?.length,
-      anuncios: anuncios.data?.length
+    // Aplicar normalização extra se necessário
+    const resumoData = normalizeData(resumo.data?.[0] || {});
+    const campanhasData = campanhas.data || [];
+    const conjuntosData = conjuntos.data || [];
+    const anunciosData = anuncios.data || [];
+    
+    console.log('📊 Dados normalizados:', {
+      resumo: Object.keys(resumoData),
+      campanhas: campanhasData.length,
+      conjuntos: conjuntosData.length,
+      anuncios: anunciosData.length
     });
     
-    renderResumo(resumo.data?.[0] || {});
-    renderTabela('table-campanhas', campanhas.data || []);
-    renderTabela('table-conjuntos', conjuntos.data || []);
-    renderTabela('table-anuncios', anuncios.data || []);
+    renderResumo(resumoData);
+    renderTabela('table-campanhas', campanhasData);
+    renderTabela('table-conjuntos', conjuntosData);
+    renderTabela('table-anuncios', anunciosData);
     
     setStatus('Dados carregados com sucesso!', 'success');
     console.log('✅ Tudo renderizado!');
@@ -477,19 +514,29 @@ async function carregarDados() {
 
 // ─── RENDER ────────────────────────────────────────────────────────────
 function renderResumo(d) {
-  const spend = parseFloat(d.spend || 0).toFixed(2);
+  // Garantir que todos os valores sejam números antes de calcular
+  const spend_raw = parseFloat(d.spend || 0);
   const imp = parseInt(d.impressions || 0);
   const cli = parseInt(d.clicks || 0);
-  const ctr = imp > 0 ? ((cli / imp) * 100).toFixed(2) : '0.00';
-  const cpc = cli > 0 ? (spend / cli).toFixed(2) : '0.00';
-  const cpm = imp > 0 ? ((spend / imp) * 1000).toFixed(2) : '0.00';
   
-  document.getElementById('val-gasto').textContent = `R$ ${spend}`;
+  // Calcular métricas com verificações robustas
+  const spend = isNaN(spend_raw) ? 0 : spend_raw;
+  const ctr = imp > 0 ? ((cli / imp) * 100) : 0;
+  const cpc = cli > 0 ? (spend / cli) : 0;
+  const cpm = imp > 0 ? ((spend / imp) * 1000) : 0;
+  
+  // Formatar apenas quando temos números válidos
+  const spend_fmt = spend.toFixed(2);
+  const ctr_fmt = ctr.toFixed(2);
+  const cpc_fmt = cpc.toFixed(2);
+  const cpm_fmt = cpm.toFixed(2);
+  
+  document.getElementById('val-gasto').textContent = `R$ ${spend_fmt}`;
   document.getElementById('val-impressoes').textContent = imp.toLocaleString('pt-BR');
   document.getElementById('val-cliques').textContent = cli.toLocaleString('pt-BR');
-  document.getElementById('val-ctr').textContent = `${ctr}%`;
-  document.getElementById('val-cpc').textContent = `R$ ${cpc}`;
-  document.getElementById('val-cpm').textContent = `R$ ${cpm}`;
+  document.getElementById('val-ctr').textContent = `${ctr_fmt}%`;
+  document.getElementById('val-cpc').textContent = `R$ ${cpc_fmt}`;
+  document.getElementById('val-cpm').textContent = `R$ ${cpm_fmt}`;
   
   console.log('✅ Resumo renderizado:', { spend, imp, cli, ctr, cpc, cpm });
 }
@@ -509,7 +556,10 @@ function renderTabela(id, items) {
     html += '<tr>';
     cols.forEach(col => {
       let val = item[col] || '-';
-      if (col === 'spend') val = `R$ ${parseFloat(val || 0).toFixed(2)}`;
+      if (col === 'spend') {
+        const spend_val = parseFloat(val || 0);
+        val = `R$ ${isNaN(spend_val) ? '0.00' : spend_val.toFixed(2)}`;
+      }
       html += `<td>${val}</td>`;
     });
     html += '</tr>';
